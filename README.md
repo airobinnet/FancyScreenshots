@@ -20,7 +20,14 @@ Fancy Screenshot Creator is a Python application that allows you to take screens
 
 ## Installation
 
-1. Clone this repository or download the source code.
+1. Clone this repository:
+
+   ```
+   git clone https://github.com/airobinnet/FancyScreenshots.git
+   ```
+
+   Alternatively, you can download the source code.
+
 2. Install PyQt5 using pip:
 
    ```
