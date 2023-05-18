@@ -30,6 +30,8 @@ class DraggableIcon(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
         pixmap = QPixmap("assets/icon.png")
+        self.setWindowTitle("Fancy Screenshot Creator")
+        self.setWindowIcon(QIcon("assets/icon.png"))
         # set the position to top right
         self.move(QApplication.desktop().screen().rect().topRight() - QPoint(150, -50))
         pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
@@ -42,12 +44,15 @@ class DraggableIcon(QLabel):
         self.gradient_colors = (QColor("#f6d365"), QColor("#fda085"))
         self.random_colors = False
         self.previews = []
+        self.copy_to_clipboard = True
 
         options = load_options_from_config()
         if "gradient_start_color" in options and "gradient_end_color" in options:
             self.gradient_colors = (QColor(options["gradient_start_color"]), QColor(options["gradient_end_color"]))
         if "random_colors" in options:
             self.random_colors = options.getboolean("random_colors")
+        if "copy_to_clipboard" in options:
+            self.copy_to_clipboard = options.getboolean("copy_to_clipboard")
 
     # Create a fancy mask for the icon to wear
     def mask_pixmap(self, pixmap):
@@ -72,6 +77,7 @@ class DraggableIcon(QLabel):
         if event.button() == Qt.LeftButton:
             self.is_dragging = True
             self.mouse_offset = event.pos()
+
 
     # When you move the mouse, move the icon if we're dragging
     def mouseMoveEvent(self, event):
@@ -100,6 +106,12 @@ class DraggableIcon(QLabel):
         random_colors_action.triggered.connect(self.toggle_random_colors)
         options_menu.addAction(random_colors_action)
 
+        # add a checkable option to copy the screenshot to clipboard
+        copy_to_clipboard_action = QAction("Copy to Clipboard", options_menu, checkable=True)
+        copy_to_clipboard_action.setChecked(self.copy_to_clipboard)
+        copy_to_clipboard_action.triggered.connect(self.toggle_copy_to_clipboard)
+        options_menu.addAction(copy_to_clipboard_action)
+
         menu.addMenu(options_menu)
 
         # Some self-promotion never hurt anyone
@@ -117,6 +129,17 @@ class DraggableIcon(QLabel):
         if action:
             if action.text() == "Take Screenshot":
                 self.start_area_selection()
+
+    # Toggle the copy to clipboard option
+    def toggle_copy_to_clipboard(self, checked):
+        self.copy_to_clipboard = checked
+        options = {
+            "gradient_start_color": self.gradient_colors[0].name(),
+            "gradient_end_color": self.gradient_colors[1].name(),
+            "random_colors": str(self.random_colors),
+            "copy_to_clipboard": str(self.copy_to_clipboard)
+        }
+        save_options_to_config(options)
 
     # What's this info thing all about?
     def show_info(self):
@@ -222,6 +245,11 @@ class AreaSelector(QWidget):
             os.makedirs("screenshots")
         file_path = "screenshots/{}.png".format(uuid.uuid4().hex)
         fancy_screenshot.save(file_path)
+     
+        # copy the image to the clipboard
+        if self.draggable_icon.copy_to_clipboard:
+            clipboard = QApplication.clipboard()
+            clipboard.setPixmap(fancy_screenshot)
 
         # Show the preview
         preview = ScreenshotPreview(fancy_screenshot, file_path, self.draggable_icon)
@@ -339,6 +367,7 @@ class ScreenshotPreview(QLabel):
         if event.button() == Qt.LeftButton:
             # Open the image with the standard image viewer
             # add the multiplatform path to the file
+
             full_path = os.path.abspath(self.file_path)
             if sys.platform.startswith('darwin'):
                 subprocess.call(('open', full_path))
