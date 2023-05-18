@@ -1,10 +1,12 @@
+import subprocess
 import sys
 import os
 import uuid
 import configparser
-from PyQt5.QtCore import Qt, QRect, QPoint, QSize, QRectF
-from PyQt5.QtGui import QPixmap, QPainter, QBrush, QColor, QPen, QIcon, QLinearGradient
+from PyQt5.QtCore import Qt, QRect, QPoint, QSize, QRectF, QTimer, QPropertyAnimation, QEasingCurve
+from PyQt5.QtGui import QPixmap, QPainter, QBrush, QColor, QPen, QIcon, QLinearGradient, QMouseEvent
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QMenu, QAction, QRubberBand, QDesktopWidget, QColorDialog, QCheckBox, QTextBrowser
+
 import random
 
 # Save the options to a secret file so we don't forget them
@@ -39,6 +41,7 @@ class DraggableIcon(QLabel):
         self.fullscre = None
         self.gradient_colors = (QColor("#f6d365"), QColor("#fda085"))
         self.random_colors = False
+        self.previews = []
 
         options = load_options_from_config()
         if "gradient_start_color" in options and "gradient_end_color" in options:
@@ -217,7 +220,13 @@ class AreaSelector(QWidget):
                                                         self.draggable_icon.random_colors)
         if not os.path.exists("screenshots"):
             os.makedirs("screenshots")
-        fancy_screenshot.save("screenshots/{}.png".format(uuid.uuid4().hex))
+        file_path = "screenshots/{}.png".format(uuid.uuid4().hex)
+        fancy_screenshot.save(file_path)
+
+        # Show the preview
+        preview = ScreenshotPreview(fancy_screenshot, file_path, self.draggable_icon)
+        self.draggable_icon.previews.append(preview)
+        preview.show()
 
     # Draw a drop shadow around the screenshot to make it look cooler
     def draw_drop_shadow(self, painter, rect):
@@ -280,6 +289,65 @@ class AreaSelector(QWidget):
 
         painter.end()
         return fancy_screenshot
+
+# Create a fancy little preview window for the screenshot
+class ScreenshotPreview(QLabel):
+    def __init__(self, pixmap, file_path, draggable_icon, parent=None):
+        super().__init__(parent)
+        self.setPixmap(pixmap.scaledToWidth(400, Qt.SmoothTransformation))
+        self.file_path = file_path
+        self.draggable_icon = draggable_icon
+        self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint | Qt.SplashScreen)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        # Position the preview at the bottom right of the screen
+        screen_geometry = QDesktopWidget().availableGeometry()
+        taskbar_height = QDesktopWidget().screenGeometry().height() - screen_geometry.height()
+        print(screen_geometry)
+        print(self.width(), self.height())
+        self.move(screen_geometry.right() - 400, screen_geometry.bottom() - 400)
+
+        # Set up the timer for fading out and destroying the preview
+        self.fade_timer = QTimer()
+        self.fade_timer.setSingleShot(True)
+        self.fade_timer.timeout.connect(self.start_fade_out)
+        self.fade_timer.start(5000)
+
+    # Add a fancy fade out animation for wow effect
+    def start_fade_out(self):
+        if not self.underMouse():
+            self.fade_animation = QPropertyAnimation(self, b"windowOpacity")
+            self.fade_animation.setDuration(1000)  # Duration in milliseconds
+            self.fade_animation.setStartValue(1.0)
+            self.fade_animation.setEndValue(0.0)
+            self.fade_animation.setEasingCurve(QEasingCurve.OutQuad)
+            self.fade_animation.finished.connect(self.on_fade_out_finished)
+            self.fade_animation.start()
+
+    # Remove the preview from the draggable icon's list of previews
+    def on_fade_out_finished(self):
+        self.draggable_icon.previews.remove(self)
+        self.deleteLater()
+
+    # Stop the fade out animation if the mouse enters the preview
+    def enterEvent(self, event):
+        self.fade_timer.stop()
+
+    # Start the fade out animation if the mouse leaves the preview
+    def leaveEvent(self, event):
+        self.fade_timer.start(5000)
+
+    # Open the image with the standard image viewer on left click
+    def mousePressEvent(self, event: QMouseEvent):
+        if event.button() == Qt.LeftButton:
+            # Open the image with the standard image viewer
+            # add the multiplatform path to the file
+            full_path = os.path.abspath(self.file_path)
+            if sys.platform.startswith('darwin'):
+                subprocess.call(('open', full_path))
+            elif os.name == 'nt':
+                os.startfile(full_path)
+            self.deleteLater()
 
 # Time to unleash the power of the Fancy Screenshot Creator!
 if __name__ == "__main__":
