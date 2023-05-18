@@ -302,9 +302,6 @@ class ScreenshotPreview(QLabel):
 
         # Position the preview at the bottom right of the screen
         screen_geometry = QDesktopWidget().availableGeometry()
-        taskbar_height = QDesktopWidget().screenGeometry().height() - screen_geometry.height()
-        print(screen_geometry)
-        print(self.width(), self.height())
         self.move(screen_geometry.right() - 400, screen_geometry.bottom() - 400)
 
         # Set up the timer for fading out and destroying the preview
@@ -345,6 +342,8 @@ class ScreenshotPreview(QLabel):
             full_path = os.path.abspath(self.file_path)
             if sys.platform.startswith('darwin'):
                 subprocess.call(('open', full_path))
+            elif sys.platform.startswith('linux'):
+                subprocess.call(('xdg-open', full_path))
             elif os.name == 'nt':
                 os.startfile(full_path)
             self.deleteLater()
