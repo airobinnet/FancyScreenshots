@@ -1,6 +1,6 @@
 # Fancy Screenshot Creator
 
-Fancy Screenshot Creator is a Python application that allows you to take screenshots with customizable gradient backgrounds and drop shadows. It provides a draggable icon that stays on top of your desktop, allowing you to quickly take a screenshot and preview it with a fancy background.
+Fancy Screenshot Creator is a Python application that allows you to take screenshots with customizable gradient backgrounds and drop shadows. It provides a draggable icon that stays on top of your desktop, allowing you to quickly take a screenshot and preview it with a fancy background. Developed by AIRobin Solutions (https://airobin.net).
 
 ![Screenshot](assets/screenshot.png)
 
@@ -11,6 +11,8 @@ Fancy Screenshot Creator is a Python application that allows you to take screens
 - Random color mode for gradient backgrounds
 - Draggable icon for easy access
 - Preview window with fade-out animation
+- Option to copy the screenshot to clipboard
+- Cross-platform support (Windows, macOS, Linux)
 - Save screenshots as PNG files
 
 ## Requirements
@@ -46,8 +48,12 @@ Fancy Screenshot Creator is a Python application that allows you to take screens
 2. Drag the icon to your desired location on the desktop.
 3. Right-click the icon to access the context menu.
 4. Select "Take Screenshot" to start selecting the area for the screenshot.
-5. Adjust the gradient colors or enable random colors in the "Options" menu.
+5. Customize the gradient colors and other options through the context menu.
 6. View the preview of the fancy screenshot and click on it to open the image in the default image viewer.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 
