@@ -3,11 +3,23 @@ import sys
 import os
 import uuid
 import configparser
+import PyQt5
 from PyQt5.QtCore import Qt, QRect, QPoint, QSize, QRectF, QTimer, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QPixmap, QPainter, QBrush, QColor, QPen, QIcon, QLinearGradient, QMouseEvent
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QMenu, QAction, QRubberBand, QDesktopWidget, QColorDialog, QCheckBox, QTextBrowser
+from pathlib import Path
 
 import random
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 # Save the options to a secret file so we don't forget them
 def save_options_to_config(options):
@@ -29,9 +41,10 @@ def load_options_from_config():
 class DraggableIcon(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
-        pixmap = QPixmap("assets/icon.png")
+        icon_path = resource_path("assets/icon.png")
+        pixmap = QPixmap(str(icon_path))
         self.setWindowTitle("Fancy Screenshot Creator")
-        self.setWindowIcon(QIcon("assets/icon.png"))
+        self.setWindowIcon(QIcon(str(icon_path)))
         # set the position to top right
         self.move(QApplication.desktop().screen().rect().topRight() - QPoint(150, -50))
         pixmap = pixmap.scaled(100, 100, Qt.KeepAspectRatio, Qt.SmoothTransformation)
